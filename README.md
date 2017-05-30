@@ -42,6 +42,40 @@ Default configurations can be overridden in `jpass.properties` file:
 | default.password.generation.length | integer    | 14            |
 | fetch.icons                        | boolean    | true          |
 
+Salt installation
+-----------------
+This salt branch uses a stronger encryption technique than the master branch, such as sult. Due to this newly added scheme, the ``.jpass`` files produced with the master branch cannot be opened.
+
+New ``.jpass`` contains following structure.
+```
+[36bytes:random salt][16bytes:CBC initial vector][rest:gzip binary]
+*gzip binary: [encrypted xml (AES256 CBC mode)]
+```
+
+The 256 bit key to encrypt the xml file is being created with the following method.
+```
+SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+KeySpec spec = new PBEKeySpec(password, salt, 65536, 256);
+```
+
+Due to this ``PBKDF2`` algorithm, it requires JRE of which version is greater than or equals to 1.8.
+
+The salt encryptition makes it impossible to prepare rainbow tables. For example, look at the table of the pairs of a key and its SHA256 value.
+
+| password  | value                                                            |
+|:---------:|:----------------------------------------------------------------:|
+| love      | 686f746a95b6f836d7d70567c302c3f9ebb5ee0def3d1220ee9d4e9f34f5e131 |
+| pass      | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| hash      | d04b98f48e8f8bcc15c6ae5ac050801cd6dcfd428fb5f9e65c4e16e7807340fa |
+
+| password + random salt | value |
+|:----------------------:|:-----:|
+| love + ()U$"HF)NSAA... |unknown|
+| pass + MREINiew9_iw... |unknown|
+
+--Ryoji
+
+
 License
 -------
 Copyright (c) 2009-2017 Gabor Bata
