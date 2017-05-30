@@ -40,8 +40,11 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.JAXBException;
 
+import jpass.crypt.SaltHolder;
 import jpass.crypt.io.CryptInputStream;
 import jpass.crypt.io.CryptOutputStream;
+import jpass.crypt.io.SaltInputStream;
+import jpass.crypt.io.SaltOutputStream;
 import jpass.util.StringUtils;
 import jpass.xml.bind.Entries;
 import jpass.xml.converter.JAXBConverter;
@@ -111,7 +114,7 @@ public final class DocumentHelper {
             if (this.key == null) {
                 inputStream = new FileInputStream(this.fileName);
             } else {
-                inputStream = new GZIPInputStream(new CryptInputStream(new FileInputStream(this.fileName), this.key));
+            	inputStream = new GZIPInputStream(new CryptInputStream(new SaltInputStream(new FileInputStream(this.fileName)), this.key));
             }
             entries = CONVERTER.unmarshal(inputStream);
         } catch (JAXBException e) {
@@ -138,7 +141,7 @@ public final class DocumentHelper {
             if (this.key == null) {
                 outputStream = new FileOutputStream(this.fileName);
             } else {
-                outputStream = new GZIPOutputStream(new CryptOutputStream(new FileOutputStream(this.fileName), this.key));
+            	outputStream = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(new FileOutputStream(this.fileName), SaltHolder.INST.getSalt()), this.key));
             }
             CONVERTER.marshal(document, outputStream, Boolean.valueOf(this.key == null));
         } catch (JAXBException e) {

@@ -2,7 +2,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>jpass</groupId>
-  <artifactId>jpass</artifactId>
+  <artifactId>jpass-salt</artifactId>
   <packaging>jar</packaging>
   <version>0.1.15-SNAPSHOT</version>
   <name>JPass</name>
@@ -24,8 +24,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.5.1</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
