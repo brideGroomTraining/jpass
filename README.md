@@ -49,7 +49,7 @@ This salt branch uses a stronger encryption technique than the master branch, su
 New ``.jpass`` contains following structure.
 ```
 [36bytes:random salt][16bytes:CBC initial vector][rest:gzip binary]
-*gzip binary: [encrypted xml (AES256 CBC mode)]
+*gzip binary: [encrypted gzip of xml (AES256 CBC mode)]
 ```
 
 The 256 bit key to encrypt the xml file is being created with the following method.

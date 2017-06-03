@@ -37,23 +37,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-
-import jpass.crypt.SaltHolder;
 import jpass.crypt.io.CryptInputStream;
 import jpass.crypt.io.CryptOutputStream;
 import jpass.crypt.io.SaltInputStream;
@@ -296,10 +289,19 @@ public final class FileHelper {
     
     public static void encryptFile(File file, final String password, final byte[] salt) throws Exception {
         byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
-        try (InputStream fis = new FileInputStream(file);
-             OutputStream os = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(new FileOutputStream(new File(file.getCanonicalPath()+".enc")), salt), hashedPass));) {
-            IOUtils.copy(fis, os, 8192);
-            os.flush();
+        try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            OutputStream gos = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(bos, salt), hashedPass));
+            OutputStream fos = new FileOutputStream(new File(file.getCanonicalPath()+".enc"));
+        ) {
+            gos.write(FileUtils.readFileToByteArray(file));
+            gos.flush();
+            gos.close();
+            bos.flush();
+            fos.write(bos.toByteArray());
+            bos.close();
+            fos.flush();
+            fos.close();
         }
     }
     
