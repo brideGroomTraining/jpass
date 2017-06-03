@@ -38,14 +38,12 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
@@ -63,7 +61,7 @@ import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
-
+import org.apache.commons.io.IOUtils;
 import jpass.crypt.SaltHolder;
 import jpass.util.SpringUtilities;
 import jpass.util.StringUtils;
@@ -280,38 +278,34 @@ public final class MessageDialog extends JDialog implements ActionListener {
             }
         }
 
-        byte[] salt = new byte[36];
-        if (fileName != null) {
-            FileInputStream in = null;
-            try {
-                in = new FileInputStream(fileName);
-                in.read(salt);
-            } catch (Exception ex) {
-            	ex.printStackTrace();
-            } finally {
-                try {
-                    if (in != null) in.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        } else {
-            salt = UUID.randomUUID().toString().getBytes(Charset.forName("UTF-8"));
-        }
-        
-        byte[] passwordHash = null;
+        //passwordHash = CryptUtils.getPKCS5Sha256Hash(password.getPassword());
         try {
-            //passwordHash = CryptUtils.getPKCS5Sha256Hash(password.getPassword());
+            byte[] salt = readSalt(fileName);
             SaltHolder.INST.setSalt(salt);
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            KeySpec spec = new PBEKeySpec(password.getPassword(), salt, 65536, 256);
-            SecretKey secretKey = factory.generateSecret(spec);
-            passwordHash = secretKey.getEncoded();
+            return generateHash(password.getPassword(), salt);
         } catch (Exception e) {
-            showErrorMessage(parent,
-                    "Cannot generate password hash:\n" + StringUtils.stripString(e.getMessage()) + "\n\nOpening and saving files are not possible!");
+            showErrorMessage(parent, "Cannot generate password hash:\n" + StringUtils.stripString(e.getMessage()) + "\n\nOpening and saving files are not possible!");
+            return null;
         }
-        return passwordHash;
+    }
+    
+    public static byte[] generateHash(final char[] password, byte[] salt) throws Exception {
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        KeySpec spec = new PBEKeySpec(password, salt, 65536, 256);
+        SecretKey secretKey = factory.generateSecret(spec);
+        return secretKey.getEncoded();
+    }
+    
+    public static byte[] readSalt(String fileName) {
+        if (org.apache.commons.lang.StringUtils.isEmpty(fileName)) return UUID.randomUUID().toString().getBytes(Charset.forName("UTF-8"));
+        try (FileInputStream in = new FileInputStream(fileName);) {
+            byte[] salt = new byte[36];
+            in.read(salt);
+            return salt;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new byte[]{};
+        }
     }
 
     /**
@@ -330,27 +324,12 @@ public final class MessageDialog extends JDialog implements ActionListener {
 
     /** Get resource as string */
     private static String getResourceAsString(String name) {
-        StringBuilder builder = new StringBuilder();
-        BufferedReader bufferedReader = null;
         try {
-            InputStream is = MessageDialog.class.getClassLoader().getResourceAsStream("resources/" + name);
-            bufferedReader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                builder.append(line).append('\n');
-            }
-        } catch (Exception e) {
+            return IOUtils.toString(MessageDialog.class.getClassLoader().getResourceAsStream("resources/" + name), "UTF-8");
+        } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (bufferedReader != null) {
-                    bufferedReader.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            return "";
         }
-        return builder.toString();
     }
 
     /**

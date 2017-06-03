@@ -110,6 +110,26 @@ public final class EntryHelper {
             parent.refreshEntryTitleList(ed.getFormData().getTitle());
         }
     }
+    
+    public static void encryptFileWithEntry(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        FileHelper.encryptFile(parent, oldEntry.getPassword());
+    }
+    
+    public static void decryptFileWithEntry(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        FileHelper.decryptFile(parent, oldEntry.getPassword());
+    }
 
     /**
      * Adds an entry.

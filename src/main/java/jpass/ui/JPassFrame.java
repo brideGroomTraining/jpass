@@ -29,6 +29,7 @@
 
 package jpass.ui;
 
+import jpass.Singletons;
 import jpass.data.DataModel;
 import jpass.ui.action.Callback;
 import jpass.ui.action.CloseListener;
@@ -43,8 +44,11 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -61,6 +65,8 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * The main frame for JPass.
  *
@@ -68,31 +74,31 @@ import javax.swing.WindowConstants;
  *
  */
 public final class JPassFrame extends JFrame {
-    private static final long serialVersionUID = -4114209356464342368L;
+    private static final long   serialVersionUID = -4114209356464342368L;
+    public  static final String PROGRAM_NAME     = "JPass Password Manager";
+    public  static final String PROGRAM_VERSION  = "0.1.15-SNAPSHOT";
 
-    private static volatile JPassFrame INSTANCE;
-
-    public static final String PROGRAM_NAME = "JPass Password Manager";
-    public static final String PROGRAM_VERSION = "0.1.15-SNAPSHOT";
-
-    private final JPopupMenu popup;
-    private final JPanel topContainerPanel;
-    private final JMenuBar menuBar;
-    private final SearchPanel searchPanel;
-    private final JMenu fileMenu;
-    private final JMenu editMenu;
-    private final JMenu toolsMenu;
-    private final JMenu helpMenu;
-    private final JToolBar toolBar;
-    private final JScrollPane scrollPane;
-    private final JList entryTitleList;
-    private final DefaultListModel entryTitleListModel;
-    private final DataModel model = DataModel.getInstance();
-    private final StatusPanel statusPanel;
-    private final IconStorage iconStorage = IconStorage.newInstance();
+    private final Configuration configuration = Singletons.I.getConfiguration();
+    
+    private final JPopupMenu                popup;
+    private final JPanel                    topContainerPanel;
+    private final JMenuBar                  menuBar;
+    private final SearchPanel               searchPanel;
+    private final JMenu                     fileMenu;
+    private final JMenu                     editMenu;
+    private final JMenu                     toolsMenu;
+    private final JMenu                     helpMenu;
+    private final JToolBar                  toolBar;
+    private final JScrollPane               scrollPane;
+    private final JList<String>             entryTitleList;
+    private final DefaultListModel<String>  entryTitleListModel;
+    private final StatusPanel               statusPanel;
+    private final DataModel   model         = DataModel.getInstance();
+    private final IconStorage iconStorage   = IconStorage.newInstance();
+    
     private volatile boolean processing = false;
 
-    private JPassFrame(String fileName) {
+    public JPassFrame(String fileName) {
         try {
             setIconImage(MessageDialog.getIcon("lock").getImage());
         } catch (Exception e) {
@@ -101,22 +107,25 @@ public final class JPassFrame extends JFrame {
 
         this.toolBar = new JToolBar();
         this.toolBar.setFloatable(false);
-        this.toolBar.add(MenuActionType.NEW_FILE.getAction());
-        this.toolBar.add(MenuActionType.OPEN_FILE.getAction());
-        this.toolBar.add(MenuActionType.SAVE_FILE.getAction());
+        this.toolBar.add(MenuActionType.NEW_FILE            .getAction());
+        this.toolBar.add(MenuActionType.OPEN_FILE           .getAction());
+        this.toolBar.add(MenuActionType.SAVE_FILE           .getAction());
         this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.ADD_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.EDIT_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.DUPLICATE_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.DELETE_ENTRY.getAction());
+        this.toolBar.add(MenuActionType.ADD_ENTRY           .getAction());
+        this.toolBar.add(MenuActionType.EDIT_ENTRY          .getAction());
+        this.toolBar.add(MenuActionType.DUPLICATE_ENTRY     .getAction());
+        this.toolBar.add(MenuActionType.DELETE_ENTRY        .getAction());
         this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.COPY_URL.getAction());
-        this.toolBar.add(MenuActionType.COPY_USER.getAction());
-        this.toolBar.add(MenuActionType.COPY_PASSWORD.getAction());
-        this.toolBar.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
+        this.toolBar.add(MenuActionType.COPY_URL            .getAction());
+        this.toolBar.add(MenuActionType.COPY_USER           .getAction());
+        this.toolBar.add(MenuActionType.COPY_PASSWORD       .getAction());
+        this.toolBar.add(MenuActionType.CLEAR_CLIPBOARD     .getAction());
         this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.ABOUT.getAction());
-        this.toolBar.add(MenuActionType.EXIT.getAction());
+        this.toolBar.add(MenuActionType.ENCRYPT_FILE        .getAction());
+        this.toolBar.add(MenuActionType.DECRYPT_FILE        .getAction());
+        this.toolBar.addSeparator();
+        this.toolBar.add(MenuActionType.ABOUT               .getAction());
+        this.toolBar.add(MenuActionType.EXIT                .getAction());
 
         this.searchPanel = new SearchPanel(new Callback() {
             @Override
@@ -128,69 +137,69 @@ public final class JPassFrame extends JFrame {
         });
 
         this.topContainerPanel = new JPanel(new BorderLayout());
-        this.topContainerPanel.add(this.toolBar, BorderLayout.NORTH);
+        this.topContainerPanel.add(this.toolBar,     BorderLayout.NORTH);
         this.topContainerPanel.add(this.searchPanel, BorderLayout.SOUTH);
 
         this.menuBar = new JMenuBar();
 
         this.fileMenu = new JMenu("File");
         this.fileMenu.setMnemonic(KeyEvent.VK_F);
-        this.fileMenu.add(MenuActionType.NEW_FILE.getAction());
-        this.fileMenu.add(MenuActionType.OPEN_FILE.getAction());
-        this.fileMenu.add(MenuActionType.SAVE_FILE.getAction());
-        this.fileMenu.add(MenuActionType.SAVE_AS_FILE.getAction());
+        this.fileMenu.add(MenuActionType.NEW_FILE           .getAction());
+        this.fileMenu.add(MenuActionType.OPEN_FILE          .getAction());
+        this.fileMenu.add(MenuActionType.SAVE_FILE          .getAction());
+        this.fileMenu.add(MenuActionType.SAVE_AS_FILE       .getAction());
         this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.EXPORT_XML.getAction());
-        this.fileMenu.add(MenuActionType.IMPORT_XML.getAction());
+        this.fileMenu.add(MenuActionType.EXPORT_XML         .getAction());
+        this.fileMenu.add(MenuActionType.IMPORT_XML         .getAction());
         this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.CHANGE_PASSWORD.getAction());
+        this.fileMenu.add(MenuActionType.CHANGE_PASSWORD    .getAction());
         this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.EXIT.getAction());
+        this.fileMenu.add(MenuActionType.EXIT               .getAction());
         this.menuBar.add(this.fileMenu);
 
         this.editMenu = new JMenu("Edit");
         this.editMenu.setMnemonic(KeyEvent.VK_E);
-        this.editMenu.add(MenuActionType.ADD_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.EDIT_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.DUPLICATE_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.DELETE_ENTRY.getAction());
+        this.editMenu.add(MenuActionType.ADD_ENTRY          .getAction());
+        this.editMenu.add(MenuActionType.EDIT_ENTRY         .getAction());
+        this.editMenu.add(MenuActionType.DUPLICATE_ENTRY    .getAction());
+        this.editMenu.add(MenuActionType.DELETE_ENTRY       .getAction());
         this.editMenu.addSeparator();
-        this.editMenu.add(MenuActionType.COPY_URL.getAction());
-        this.editMenu.add(MenuActionType.COPY_USER.getAction());
-        this.editMenu.add(MenuActionType.COPY_PASSWORD.getAction());
+        this.editMenu.add(MenuActionType.COPY_URL           .getAction());
+        this.editMenu.add(MenuActionType.COPY_USER          .getAction());
+        this.editMenu.add(MenuActionType.COPY_PASSWORD      .getAction());
         this.editMenu.addSeparator();
-        this.editMenu.add(MenuActionType.FIND_ENTRY.getAction());
+        this.editMenu.add(MenuActionType.FIND_ENTRY         .getAction());
         this.menuBar.add(this.editMenu);
 
         this.toolsMenu = new JMenu("Tools");
         this.toolsMenu.setMnemonic(KeyEvent.VK_T);
-        this.toolsMenu.add(MenuActionType.GENERATE_PASSWORD.getAction());
-        this.toolsMenu.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
+        this.toolsMenu.add(MenuActionType.GENERATE_PASSWORD .getAction());
+        this.toolsMenu.add(MenuActionType.CLEAR_CLIPBOARD   .getAction());
         this.menuBar.add(this.toolsMenu);
 
         this.helpMenu = new JMenu("Help");
         this.helpMenu.setMnemonic(KeyEvent.VK_H);
-        this.helpMenu.add(MenuActionType.LICENSE.getAction());
+        this.helpMenu.add(MenuActionType.LICENSE            .getAction());
         this.helpMenu.addSeparator();
-        this.helpMenu.add(MenuActionType.ABOUT.getAction());
+        this.helpMenu.add(MenuActionType.ABOUT              .getAction());
         this.menuBar.add(this.helpMenu);
 
         this.popup = new JPopupMenu();
-        this.popup.add(MenuActionType.ADD_ENTRY.getAction());
-        this.popup.add(MenuActionType.EDIT_ENTRY.getAction());
-        this.popup.add(MenuActionType.DUPLICATE_ENTRY.getAction());
-        this.popup.add(MenuActionType.DELETE_ENTRY.getAction());
+        this.popup.add(MenuActionType.ADD_ENTRY             .getAction());
+        this.popup.add(MenuActionType.EDIT_ENTRY            .getAction());
+        this.popup.add(MenuActionType.DUPLICATE_ENTRY       .getAction());
+        this.popup.add(MenuActionType.DELETE_ENTRY          .getAction());
         this.popup.addSeparator();
-        this.popup.add(MenuActionType.COPY_URL.getAction());
-        this.popup.add(MenuActionType.COPY_USER.getAction());
-        this.popup.add(MenuActionType.COPY_PASSWORD.getAction());
+        this.popup.add(MenuActionType.COPY_URL              .getAction());
+        this.popup.add(MenuActionType.COPY_USER             .getAction());
+        this.popup.add(MenuActionType.COPY_PASSWORD         .getAction());
         this.popup.addSeparator();
-        this.popup.add(MenuActionType.FIND_ENTRY.getAction());
+        this.popup.add(MenuActionType.FIND_ENTRY            .getAction());
 
-        this.entryTitleListModel = new DefaultListModel();
-        this.entryTitleList = new JList(this.entryTitleListModel);
+        this.entryTitleListModel = new DefaultListModel<String>();
+        this.entryTitleList      = new JList<String>(this.entryTitleListModel);
         this.entryTitleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.entryTitleList.addMouseListener(new ListListener());
+        this.entryTitleList.addMouseListener(new ListListener(this));
         this.entryTitleList.setCellRenderer(new IconedListCellRenderer());
         this.scrollPane = new JScrollPane(this.entryTitleList);
         MenuActionType.bindAllActions(this.entryTitleList);
@@ -200,8 +209,8 @@ public final class JPassFrame extends JFrame {
         refreshAll();
 
         getContentPane().add(this.topContainerPanel, BorderLayout.NORTH);
-        getContentPane().add(this.scrollPane, BorderLayout.CENTER);
-        getContentPane().add(this.statusPanel, BorderLayout.SOUTH);
+        getContentPane().add(this.scrollPane,        BorderLayout.CENTER);
+        getContentPane().add(this.statusPanel,       BorderLayout.SOUTH);
 
         setJMenuBar(this.menuBar);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -216,27 +225,12 @@ public final class JPassFrame extends JFrame {
         this.entryTitleList.requestFocusInWindow();
     }
 
-    public static JPassFrame getInstance() {
-        return getInstance(null);
-    }
-
-    public static JPassFrame getInstance(String fileName) {
-        if (INSTANCE == null) {
-            synchronized (JPassFrame.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new JPassFrame(fileName);
-                }
-            }
-        }
-        return INSTANCE;
-    }
-
     /**
      * Gets the entry title list.
      *
      * @return entry title list
      */
-    public JList getEntryTitleList() {
+    public JList<String> getEntryTitleList() {
         return this.entryTitleList;
     }
 
@@ -253,8 +247,7 @@ public final class JPassFrame extends JFrame {
      * Refresh frame title based on data model.
      */
     public void refreshFrameTitle() {
-        setTitle((getModel().isModified() ? "*" : "") + (getModel().getFileName() == null ? "Untitled" : getModel().getFileName()) + " - "
-                + PROGRAM_NAME);
+        setTitle((getModel().isModified() ? "*" : "") + StringUtils.defaultString(getModel().getFileName(), "Untitled") + " - " + PROGRAM_NAME);
     }
 
     /**
@@ -266,23 +259,15 @@ public final class JPassFrame extends JFrame {
         this.entryTitleListModel.clear();
         List<String> titleList = this.model.getListOfTitles();
         Collections.sort(titleList, String.CASE_INSENSITIVE_ORDER);
-
-        String searchCriteria = this.searchPanel.getSearchCriteria();
-        for (String title : titleList) {
-            if (searchCriteria.isEmpty() || title.toLowerCase().contains(searchCriteria.toLowerCase())) {
-                this.entryTitleListModel.addElement(title);
-            }
-        }
-
-        if (selectTitle != null) {
-            this.entryTitleList.setSelectedValue(selectTitle, true);
-        }
-
-        if (searchCriteria.isEmpty()) {
-            this.statusPanel.setText("Entries count: " + titleList.size());
-        } else {
-            this.statusPanel.setText("Entries found: " + this.entryTitleListModel.size() + " / " + titleList.size());
-        }
+        final String searchCriteria = this.searchPanel.getSearchCriteria();
+        (searchCriteria.isEmpty() ? titleList : titleList.stream()
+                .filter (t -> StringUtils.containsIgnoreCase(t, searchCriteria)).collect(Collectors.toList()))
+                .forEach(t -> this.entryTitleListModel.addElement(t));
+        Optional.ofNullable(selectTitle).ifPresent(t -> this.entryTitleList.setSelectedValue(t, true));
+        final String status = new StringBuilder().append("Entries ")
+                .append(StringUtils.isEmpty(searchCriteria) ? "count: " : "found: " + this.entryTitleListModel.size() + " / ")
+                .append(titleList.size()).toString();
+        this.statusPanel.setText(status);
     }
 
     /**
@@ -297,13 +282,8 @@ public final class JPassFrame extends JFrame {
      * Exits the application.
      */
     public void exitFrame() {
-        if (Configuration.getInstance().is("clear.clipboard.on.exit.enabled", false)) {
-            EntryHelper.copyEntryField(this, null);
-        }
-
-        if (this.processing) {
-            return;
-        }
+        if (configuration.is("clear.clipboard.on.exit.enabled", false)) EntryHelper.copyEntryField(this, null);
+        if (this.processing) return;
         if (this.model.isModified()) {
             int option = MessageDialog.showQuestionMessage(this,
                     "The current file has been modified.\nDo you want to save the changes before closing?", MessageDialog.YES_NO_CANCEL_OPTION);
@@ -335,9 +315,7 @@ public final class JPassFrame extends JFrame {
      */
     public void setProcessing(boolean processing) {
         this.processing = processing;
-        for (MenuActionType actionType : MenuActionType.values()) {
-            actionType.getAction().setEnabled(!processing);
-        }
+        Arrays.asList(MenuActionType.values()).stream().map(v -> v.getAction()).forEach(a -> a.setEnabled(!processing));
         this.searchPanel.setEnabled(!processing);
         this.entryTitleList.setEnabled(!processing);
         this.statusPanel.setProcessing(processing);
@@ -367,13 +345,13 @@ public final class JPassFrame extends JFrame {
      * @author Daniil Bubnov
      */
     private class IconedListCellRenderer extends DefaultListCellRenderer {
+        private static final long serialVersionUID = -8923644112647460989L;
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (!Configuration.getInstance().is("fetch.icons", false))
-                return label;
-            Entry entry = model.getEntryByTitle(value.toString()); // god forgive me
-            ImageIcon icon = iconStorage.getIcon(entry.getUrl());
+            if (!configuration.is("fetch.icons", false)) return label;
+            Entry       entry = model.getEntryByTitle(value.toString()); // god forgive me
+            ImageIcon   icon  = iconStorage.getIcon(entry.getUrl());
             if (icon != null) {
                 JPanel row = new JPanel(new BorderLayout());
                 row.add(label, BorderLayout.CENTER);

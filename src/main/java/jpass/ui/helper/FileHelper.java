@@ -29,13 +29,29 @@
 
 package jpass.ui.helper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+import jpass.crypt.SaltHolder;
+import jpass.crypt.io.CryptInputStream;
+import jpass.crypt.io.CryptOutputStream;
+import jpass.crypt.io.SaltInputStream;
+import jpass.crypt.io.SaltOutputStream;
 import jpass.data.DocumentHelper;
 import jpass.ui.JPassFrame;
 import jpass.ui.MessageDialog;
@@ -254,6 +270,56 @@ public final class FileHelper {
             }
         };
         worker.execute();
+    }
+    
+    public static void encryptFile(final JPassFrame parent, final String password) {
+        final File file = showFileChooser(parent, "Open", "*.*", "file");
+        if (file == null) return;
+        try {
+            encryptFile(file, password, UUID.randomUUID().toString().getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void encryptFile(File file, final String password, final byte[] salt) throws Exception {
+        byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
+//        InputStream fis = new FileInputStream(file);
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        OutputStream os = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(b, salt), hashedPass));
+        OutputStream oos = new FileOutputStream(new File(file.getCanonicalPath()+".enc"));
+        os.write(FileUtils.readFileToByteArray(file));
+//        IOUtils.copy(fis, os, 4096000);
+        os.flush();
+        os.close();
+        b.flush();
+        oos.write(b.toByteArray());
+        b.close();
+        oos.flush();
+        oos.close();
+//        fis.close();
+//        os.close();
+    }
+    
+    public static void decryptFile(final JPassFrame parent, final String password) {
+        final File file = showFileChooser(parent, "Open", "enc", "encrypted file");
+        if (file == null) return;
+        try {
+            byte[] salt = MessageDialog.readSalt(file.getCanonicalPath());
+            byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
+            InputStream fis = new GZIPInputStream(new CryptInputStream(new SaltInputStream(new FileInputStream(file)), hashedPass));
+            OutputStream os = new FileOutputStream(file.getCanonicalPath().replaceAll(".enc$", "") + ".dec");
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            IOUtils.copy(fis, b, 4096000);
+            b.flush();
+            fis.close();
+            os.write(b.toByteArray());
+            os.flush();
+            b.close();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

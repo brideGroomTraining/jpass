@@ -50,6 +50,7 @@ import javax.swing.SpringLayout;
 import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 
+import jpass.Singletons;
 import jpass.util.Configuration;
 import jpass.util.CryptUtils;
 import jpass.util.SpringUtilities;
@@ -62,7 +63,8 @@ import jpass.util.SpringUtilities;
  */
 public final class GeneratePasswordDialog extends JDialog implements ActionListener {
     private static final long serialVersionUID = -1807066563698740446L;
-
+    private final Configuration configuration = Singletons.I.getConfiguration();
+    
     /** Characters for custom symbols generation. */
     private static final String SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~";
 
@@ -137,7 +139,7 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
         this.lengthLabel = new JLabel("Password length:");
         this.lengthPanel.add(this.lengthLabel);
 
-        int passwordGenerationLength = Configuration.getInstance().getInteger("default.password.generation.length", 14);
+        int passwordGenerationLength = configuration.getInteger("default.password.generation.length", 14);
         if (passwordGenerationLength > 64) {
             passwordGenerationLength = 64;
         }

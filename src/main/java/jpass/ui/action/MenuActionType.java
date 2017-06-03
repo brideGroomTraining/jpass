@@ -29,6 +29,7 @@
 
 package jpass.ui.action;
 
+import jpass.Singletons;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -57,7 +58,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -8823457568905830188L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.createNew(JPassFrame.getInstance());
+            FileHelper.createNew(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -65,7 +66,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -441032579227887886L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.openFile(JPassFrame.getInstance());
+            FileHelper.openFile(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -73,7 +74,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 8657273941022043906L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.saveFile(JPassFrame.getInstance(), false);
+            FileHelper.saveFile(Singletons.I.getJPassFrame(), false);
         }
     }),
 
@@ -81,7 +82,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 1768189708479045321L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.saveFile(JPassFrame.getInstance(), true);
+            FileHelper.saveFile(Singletons.I.getJPassFrame(), true);
         }
     }),
 
@@ -89,7 +90,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 7673408373934859054L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.exportFile(JPassFrame.getInstance());
+            FileHelper.exportFile(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -97,7 +98,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -1331441499101116570L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            FileHelper.importFile(JPassFrame.getInstance());
+            FileHelper.importFile(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -105,7 +106,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 616220526614500130L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame parent = JPassFrame.getInstance();
+            JPassFrame parent = Singletons.I.getJPassFrame();
             byte[] password = MessageDialog.showPasswordDialog(parent, true, null);
             if (password == null) {
                 MessageDialog.showInformationMessage(parent, "Password has not been modified.");
@@ -123,7 +124,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 2865402858056954304L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            new GeneratePasswordDialog(JPassFrame.getInstance());
+            new GeneratePasswordDialog(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -131,7 +132,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -2741659403416846295L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame.getInstance().exitFrame();
+            Singletons.I.getJPassFrame().exitFrame();
         }
     }),
 
@@ -146,7 +147,7 @@ public enum MenuActionType {
             sb.append("\n");
             sb.append("Java version: ").append(System.getProperties().getProperty("java.version")).append("\n");
             sb.append(System.getProperties().getProperty("java.vendor"));
-            MessageDialog.showInformationMessage(JPassFrame.getInstance(), sb.toString());
+            MessageDialog.showInformationMessage(Singletons.I.getJPassFrame(), sb.toString());
         }
     }),
 
@@ -154,7 +155,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 2476765521818491911L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            MessageDialog.showTextFile(JPassFrame.getInstance(), "License", "license.txt");
+            MessageDialog.showTextFile(Singletons.I.getJPassFrame(), "License", "license.txt");
         }
     }),
 
@@ -162,7 +163,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 6793989246928698613L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            EntryHelper.addEntry(JPassFrame.getInstance());
+            EntryHelper.addEntry(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -170,7 +171,23 @@ public enum MenuActionType {
         private static final long serialVersionUID = -3234220812811327191L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            EntryHelper.editEntry(JPassFrame.getInstance());
+            EntryHelper.editEntry(Singletons.I.getJPassFrame());
+        }
+    }),
+    
+    ENCRYPT_FILE("jpass.menu.enc_file_action", new AbstractMenuAction("Encrypt with this...", MessageDialog.getIcon("entry_edit"), KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -3234220812811323291L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.encryptFileWithEntry(Singletons.I.getJPassFrame());
+        }
+    }),
+    
+    DECRYPT_FILE("jpass.menu.dec_file_action", new AbstractMenuAction("Decrypt with this...", MessageDialog.getIcon("entry_edit"), KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -3234220812819027191L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.decryptFileWithEntry(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -178,7 +195,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 6728896867346523861L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            EntryHelper.duplicateEntry(JPassFrame.getInstance());
+            EntryHelper.duplicateEntry(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -186,7 +203,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -1306116722130641659L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            EntryHelper.deleteEntry(JPassFrame.getInstance());
+            EntryHelper.deleteEntry(Singletons.I.getJPassFrame());
         }
     }),
 
@@ -194,7 +211,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 3321559756310744862L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame parent = JPassFrame.getInstance();
+            JPassFrame parent = Singletons.I.getJPassFrame();
             Entry entry = EntryHelper.getSelectedEntry(parent);
             if (entry != null) {
                 EntryHelper.copyEntryField(parent, entry.getUrl());
@@ -206,7 +223,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -1126080607846730912L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame parent = JPassFrame.getInstance();
+            JPassFrame parent = Singletons.I.getJPassFrame();
             Entry entry = EntryHelper.getSelectedEntry(parent);
             if (entry != null) {
                 EntryHelper.copyEntryField(parent, entry.getUser());
@@ -218,7 +235,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = 2719136744084762599L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame parent = JPassFrame.getInstance();
+            JPassFrame parent = Singletons.I.getJPassFrame();
             Entry entry = EntryHelper.getSelectedEntry(parent);
             if (entry != null) {
                 EntryHelper.copyEntryField(parent, entry.getPassword());
@@ -230,7 +247,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -7621614933053924326L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            EntryHelper.copyEntryField(JPassFrame.getInstance(), null);
+            EntryHelper.copyEntryField(Singletons.I.getJPassFrame(), null);
         }
     }),
 
@@ -238,7 +255,7 @@ public enum MenuActionType {
         private static final long serialVersionUID = -7621614933053924326L;
         @Override
         public void actionPerformed(ActionEvent ev) {
-            JPassFrame.getInstance().getSearchPanel().setVisible(true);
+            Singletons.I.getJPassFrame().getSearchPanel().setVisible(true);
         }
     });
 

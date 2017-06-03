@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JList;
 import javax.swing.SwingUtilities;
 
+import jpass.Singletons;
 import jpass.ui.JPassFrame;
 import jpass.ui.helper.EntryHelper;
 
@@ -46,6 +47,10 @@ import jpass.ui.helper.EntryHelper;
  *
  */
 public class ListListener extends MouseAdapter {
+    private final JPassFrame jPassFrame;
+    public ListListener(JPassFrame jPassFrame) {
+        this.jPassFrame = jPassFrame;
+    }
 
     /**
      * Show entry on double click.
@@ -54,11 +59,11 @@ public class ListListener extends MouseAdapter {
      */
     @Override
     public void mouseClicked(MouseEvent evt) {
-        if (JPassFrame.getInstance().isProcessing()) {
+        if (jPassFrame.isProcessing()) {
             return;
         }
         if (SwingUtilities.isLeftMouseButton(evt) && evt.getClickCount() == 2) {
-            EntryHelper.editEntry(JPassFrame.getInstance());
+            EntryHelper.editEntry(jPassFrame);
         }
     }
 
@@ -88,15 +93,15 @@ public class ListListener extends MouseAdapter {
      * @param evt mouse event
      */
     private void checkPopup(MouseEvent evt) {
-        if (JPassFrame.getInstance().isProcessing()) {
+        if (jPassFrame.isProcessing()) {
             return;
         }
         if (evt.isPopupTrigger()) {
-            JList list = JPassFrame.getInstance().getEntryTitleList();
+            JList<String> list = jPassFrame.getEntryTitleList();
             if (list.isEnabled()) {
                 Point point = new Point(evt.getX(), evt.getY());
                 list.setSelectedIndex(list.locationToIndex(point));
-                JPassFrame.getInstance().getPopup().show(evt.getComponent(), evt.getX(), evt.getY());
+                jPassFrame.getPopup().show(evt.getComponent(), evt.getX(), evt.getY());
             }
         }
     }

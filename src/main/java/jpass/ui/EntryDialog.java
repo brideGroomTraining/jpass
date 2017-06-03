@@ -50,6 +50,7 @@ import javax.swing.SpringLayout;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
+import jpass.Singletons;
 import jpass.util.SpringUtilities;
 import jpass.util.StringUtils;
 import jpass.xml.bind.Entry;
@@ -61,6 +62,7 @@ import jpass.xml.bind.Entry;
  *
  */
 public class EntryDialog extends JDialog implements ActionListener {
+    private JPassFrame jPassFrame = Singletons.I.getJPassFrame(); 
     private static final long serialVersionUID = -8551022862532925078L;
     private static final char NULL_ECHO = '\0';
 
@@ -285,13 +287,12 @@ public class EntryDialog extends JDialog implements ActionListener {
      */
     private boolean checkEntryTitle() {
         boolean titleIsOk = true;
-        JPassFrame parent = JPassFrame.getInstance();
         String currentTitleText = StringUtils.stripNonValidXMLCharacters(this.titleField.getText());
         if (currentTitleText == null) {
             currentTitleText = "";
         }
         if (this.newEntry || !currentTitleText.equalsIgnoreCase(this.originalTitle)) {
-            for (Entry entry : parent.getModel().getEntries().getEntry()) {
+            for (Entry entry : jPassFrame.getModel().getEntries().getEntry()) {
                 if (currentTitleText.equalsIgnoreCase(entry.getTitle())) {
                     titleIsOk = false;
                     break;
