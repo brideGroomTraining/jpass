@@ -40,9 +40,10 @@ import java.util.Properties;
  * @author Gabor_Bata
  */
 public final class Configuration {
+    private static volatile Configuration INSTANCE;
     private Properties properties = new Properties();
 
-    public Configuration() {
+    private Configuration() {
         try {
             File filePointer = new File("jpass.properties");
             if (filePointer.exists() && filePointer.isFile()) {
@@ -78,5 +79,16 @@ public final class Configuration {
 
     public String get(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
+    }
+
+    public static Configuration getInstance() {
+        if (INSTANCE == null) {
+            synchronized (Configuration.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new Configuration();
+                }
+            }
+        }
+        return INSTANCE;
     }
 }
