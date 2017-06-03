@@ -210,8 +210,8 @@ public final class JPassFrame extends JFrame {
 
         setJMenuBar(this.menuBar);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setSize(420, 400);
-        setMinimumSize(new Dimension(420, 200));
+        setSize(480, 400);
+        setMinimumSize(new Dimension(480, 200));
         addWindowListener(new CloseListener());
         setLocationRelativeTo(null);
         setVisible(true);

@@ -37,11 +37,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.io.FileUtils;
@@ -273,52 +279,52 @@ public final class FileHelper {
     }
     
     public static void encryptFile(final JPassFrame parent, final String password) {
-        final File file = showFileChooser(parent, "Open", "*.*", "file");
+        final File file = showFileChooser(parent, "Open", "*", "file");
         if (file == null) return;
-        try {
-            encryptFile(file, password, UUID.randomUUID().toString().getBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        JOptionPane.showMessageDialog(parent, "It takes time to complete. When it completed, a dialog will be shown to you.");
+        CompletableFuture.supplyAsync(() -> UUID.randomUUID().toString().getBytes()).thenAccept(salt -> {
+            try {
+                FileHelper.encryptFile(file, password, salt);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }).whenComplete((t, e) -> {
+            if (e == null) JOptionPane.showMessageDialog(parent, "Done. "  + file.getPath() + ".enc");
+            else           JOptionPane.showMessageDialog(parent, "Error. " + e.toString());
+        });
     }
     
     public static void encryptFile(File file, final String password, final byte[] salt) throws Exception {
         byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
-//        InputStream fis = new FileInputStream(file);
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        OutputStream os = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(b, salt), hashedPass));
-        OutputStream oos = new FileOutputStream(new File(file.getCanonicalPath()+".enc"));
-        os.write(FileUtils.readFileToByteArray(file));
-//        IOUtils.copy(fis, os, 4096000);
-        os.flush();
-        os.close();
-        b.flush();
-        oos.write(b.toByteArray());
-        b.close();
-        oos.flush();
-        oos.close();
-//        fis.close();
-//        os.close();
+        try (InputStream fis = new FileInputStream(file);
+             OutputStream os = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(new FileOutputStream(new File(file.getCanonicalPath()+".enc")), salt), hashedPass));) {
+            IOUtils.copy(fis, os, 8192);
+            os.flush();
+        }
     }
     
     public static void decryptFile(final JPassFrame parent, final String password) {
         final File file = showFileChooser(parent, "Open", "enc", "encrypted file");
         if (file == null) return;
-        try {
-            byte[] salt = MessageDialog.readSalt(file.getCanonicalPath());
-            byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
-            InputStream fis = new GZIPInputStream(new CryptInputStream(new SaltInputStream(new FileInputStream(file)), hashedPass));
-            OutputStream os = new FileOutputStream(file.getCanonicalPath().replaceAll(".enc$", "") + ".dec");
-            ByteArrayOutputStream b = new ByteArrayOutputStream();
-            IOUtils.copy(fis, b, 4096000);
-            b.flush();
-            fis.close();
-            os.write(b.toByteArray());
+        JOptionPane.showMessageDialog(parent, "It takes time to complete. When it completed, a dialog will be shown to you.");
+        CompletableFuture.supplyAsync(() -> MessageDialog.readSalt(file.getPath())).thenAccept(salt -> {
+            try {
+                FileHelper.decryptFile(file, password, salt);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }).whenComplete((t, e) -> {
+            if (e == null) JOptionPane.showMessageDialog(parent, "Done. "  + file.getPath().replaceAll(".enc$", "") + ".dec");
+            else           JOptionPane.showMessageDialog(parent, "Error. " + e.toString());
+        });
+    }
+    
+    public static void decryptFile(File file, final String password, final byte[] salt) throws Exception {
+        byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
+        try (InputStream fis = new GZIPInputStream(new CryptInputStream(new SaltInputStream(new FileInputStream(file)), hashedPass));
+             OutputStream os = new FileOutputStream(file.getCanonicalPath().replaceAll(".enc$", "") + ".dec");) {
+            IOUtils.copy(fis, os, 8192);
             os.flush();
-            b.close();
-            os.close();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -449,7 +455,7 @@ public final class FileHelper {
         fc.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith("." + extension);
+                return org.apache.commons.lang.StringUtils.equals(extension, "*") ? true : f.isDirectory() || f.getName().toLowerCase().endsWith("." + extension);
             }
             @Override
             public String getDescription() {

@@ -172,7 +172,7 @@ public enum MenuActionType {
         }
     }),
     
-    ENCRYPT_FILE("jpass.menu.enc_file_action", new AbstractMenuAction("Encrypt with this...", MessageDialog.getIcon("entry_edit"), KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK)) {
+    ENCRYPT_FILE("jpass.menu.enc_file_action", new AbstractMenuAction("Encrypt file with this password...", MessageDialog.getIcon("security-low"), KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK)) {
         private static final long serialVersionUID = -3234220812811323291L;
         @Override
         public void actionPerformed(ActionEvent ev) {
@@ -180,7 +180,7 @@ public enum MenuActionType {
         }
     }),
     
-    DECRYPT_FILE("jpass.menu.dec_file_action", new AbstractMenuAction("Decrypt with this...", MessageDialog.getIcon("entry_edit"), KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK)) {
+    DECRYPT_FILE("jpass.menu.dec_file_action", new AbstractMenuAction("Decrypt file with this password...", MessageDialog.getIcon("dialog-warning"), KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK)) {
         private static final long serialVersionUID = -3234220812819027191L;
         @Override
         public void actionPerformed(ActionEvent ev) {
