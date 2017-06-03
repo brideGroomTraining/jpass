@@ -29,6 +29,18 @@
 
 package jpass.ui.helper;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Date;
+import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
+import org.apache.commons.lang.StringUtils;
+import jpass.crypt.RsaOaep;
 import jpass.ui.EntryDialog;
 import jpass.ui.JPassFrame;
 import jpass.ui.MessageDialog;
@@ -129,6 +141,108 @@ public final class EntryHelper {
         String title = (String) parent.getEntryTitleList().getSelectedValue();
         Entry oldEntry = parent.getModel().getEntryByTitle(title);
         FileHelper.decryptFile(parent, oldEntry.getPassword());
+    }
+    
+    public static void encryptPhraseWithRsa(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (!StringUtils.startsWith(oldEntry.getNotes(), "-----BEGIN RSA PUBLIC KEY-----")) {
+            MessageDialog.showWarningMessage(parent, "The entry is not a public key");
+            return;
+        }
+        try {
+            RsaOaep rsaOaep = new RsaOaep();
+            final String base64 = Arrays.stream(StringUtils.split(oldEntry.getNotes(), '\n'))
+                                        .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
+                                        .collect(Collectors.joining());
+            PublicKey publicKey = rsaOaep.deserializePublicKey(base64);
+            final String phrase = JOptionPane.showInputDialog(parent, "Input the passphrase you want to encrypt.");
+            if (StringUtils.isEmpty(phrase)) return;
+            final String encryptedPhrase = rsaOaep.encrypt(publicKey, phrase, new SecureRandom());
+            Entry entry = new Entry() {{
+               setTitle("RSA ENCRYPTION: " + new SimpleDateFormat("yyyyMMdd HHmmss").format(new Date()));
+               setNotes(encryptedPhrase);
+            }};
+            EntryDialog ed = new EntryDialog(parent, "Add New Entry", entry, false);
+            if (ed.getFormData() != null) {
+                parent.getModel().getEntries().getEntry().add(ed.getFormData());
+                parent.getModel().setModified(true);
+                parent.refreshFrameTitle();
+                parent.refreshEntryTitleList(ed.getFormData().getTitle());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showWarningMessage(parent, e.toString());
+        }
+    }
+    
+    public static void decryptPhraseWithRsa(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (!StringUtils.startsWith(oldEntry.getNotes(), "-----BEGIN RSA PRIVATE KEY-----")) {
+            MessageDialog.showWarningMessage(parent, "The entry is not a private key");
+            return;
+        }
+        try {
+            RsaOaep rsaOaep = new RsaOaep();
+            final String base64 = Arrays.stream(StringUtils.split(oldEntry.getNotes(), '\n'))
+                                        .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
+                                        .collect(Collectors.joining());
+            PrivateKey privateKey = rsaOaep.deserializePrivateKey(base64);
+            final String phrase = JOptionPane.showInputDialog(parent, "Input the passphrase you want to decrypt.");
+            if (StringUtils.isEmpty(phrase)) return;
+            final String decryptedPhrase = rsaOaep.decrypt(privateKey, phrase.replaceAll("\\s+",""));
+            Entry entry = new Entry() {{
+               setTitle("RSA DECRYPTION: " + new SimpleDateFormat("yyyyMMdd HHmmss").format(new Date()));
+               setPassword(decryptedPhrase);
+            }};
+            EntryDialog ed = new EntryDialog(parent, "Add New Entry", entry, false);
+            if (ed.getFormData() != null) {
+                parent.getModel().getEntries().getEntry().add(ed.getFormData());
+                parent.getModel().setModified(true);
+                parent.refreshFrameTitle();
+                parent.refreshEntryTitleList(ed.getFormData().getTitle());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showWarningMessage(parent, e.toString());
+        }
+    }
+    
+    public static void generateRsaKeyPair(JPassFrame parent) {
+        String[] keyEntries = new String[]{"rsa.pub", "rsa.pvt"};
+        if (parent.getModel().getEntries().getEntry().stream().anyMatch(e -> Arrays.stream(keyEntries).anyMatch(e.getTitle()::equals))) {
+            MessageDialog.showWarningMessage(parent, "Key entries already exist.");
+            return;
+        }
+        try {
+            RsaOaep rsaOaep = new RsaOaep();
+            KeyPair keypair = rsaOaep.createKeyPair(new SecureRandom());
+            Entry privateKey = new Entry(){{
+                setTitle("rsa.pvt");
+                setNotes("-----BEGIN RSA PRIVATE KEY-----\n" + Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded()) + "\n-----END RSA PRIVATE KEY-----");
+            }};
+            Entry publicKey  = new Entry(){{
+                setTitle("rsa.pub");
+                setNotes("-----BEGIN RSA PUBLIC KEY-----\n"  + Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded())  + "\n-----END RSA PUBLIC KEY-----");
+            }};
+            parent.getModel().getEntries().getEntry().add(privateKey);
+            parent.getModel().getEntries().getEntry().add(publicKey);
+            parent.getModel().setModified(true);
+            parent.refreshFrameTitle();
+            parent.refreshEntryTitleList("rsa.pub");
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showWarningMessage(parent, e.toString());
+        }
     }
 
     /**

@@ -172,6 +172,30 @@ public enum MenuActionType {
         }
     }),
     
+    GENERATE_RSA("jpass.menu.gen_rsa_action", new AbstractMenuAction("Generate asymmetric RSA key pair...", MessageDialog.getIcon("kgpg_key3"), KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -3234209767811323291L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.generateRsaKeyPair(JPassFrame.getInstance());
+        }
+    }),
+    
+    ENCRYPT_RSA("jpass.menu.enc_rsa_action", new AbstractMenuAction("Encrypt pass phrase with this public key...", MessageDialog.getIcon("security-low"), KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -3234209376811323291L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.encryptPhraseWithRsa(JPassFrame.getInstance());
+        }
+    }),
+    
+    DECRYPT_RSA("jpass.menu.dec_rsa_action", new AbstractMenuAction("Decrypt pass phrase with this private key...", MessageDialog.getIcon("dialog-warning"), KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -3284222276811323291L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.decryptPhraseWithRsa(JPassFrame.getInstance());
+        }
+    }),
+    
     ENCRYPT_FILE("jpass.menu.enc_file_action", new AbstractMenuAction("Encrypt file with this password...", MessageDialog.getIcon("security-low"), KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK)) {
         private static final long serialVersionUID = -3234220812811323291L;
         @Override

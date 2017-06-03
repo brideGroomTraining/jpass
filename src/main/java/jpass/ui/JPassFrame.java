@@ -120,6 +120,9 @@ public final class JPassFrame extends JFrame {
         this.toolBar.add(MenuActionType.ENCRYPT_FILE        .getAction());
         this.toolBar.add(MenuActionType.DECRYPT_FILE        .getAction());
         this.toolBar.addSeparator();
+        this.toolBar.add(MenuActionType.ENCRYPT_RSA         .getAction());
+        this.toolBar.add(MenuActionType.DECRYPT_RSA         .getAction());
+        this.toolBar.addSeparator();
         this.toolBar.add(MenuActionType.ABOUT               .getAction());
         this.toolBar.add(MenuActionType.EXIT                .getAction());
 
@@ -171,6 +174,7 @@ public final class JPassFrame extends JFrame {
         this.toolsMenu.setMnemonic(KeyEvent.VK_T);
         this.toolsMenu.add(MenuActionType.GENERATE_PASSWORD .getAction());
         this.toolsMenu.add(MenuActionType.CLEAR_CLIPBOARD   .getAction());
+        this.toolsMenu.add(MenuActionType.GENERATE_RSA      .getAction());
         this.menuBar.add(this.toolsMenu);
 
         this.helpMenu = new JMenu("Help");
@@ -210,8 +214,8 @@ public final class JPassFrame extends JFrame {
 
         setJMenuBar(this.menuBar);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setSize(480, 400);
-        setMinimumSize(new Dimension(480, 200));
+        setSize(540, 400);
+        setMinimumSize(new Dimension(540, 200));
         addWindowListener(new CloseListener());
         setLocationRelativeTo(null);
         setVisible(true);
