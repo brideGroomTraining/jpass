@@ -17,10 +17,11 @@ Features:
 
 Usage
 -----
-Java 6 or later is recommended to run JPass. Most platforms have a mechanism to execute `.jar` files (e.g. double click the `jpass-0.1.15-SNAPSHOT.jar`).
+Java 8 or later is recommended to run JPass. Most platforms have a mechanism to execute `.jar` files (e.g. double click the `jpass-0.1.15-SNAPSHOT.jar`).
 You can also run the application from the command line by typing (the password file is optional):
 
-    java -jar jpass-0.1.15-SNAPSHOT.jar [password_file]
+    java -jar jpass-salt-0.1.15-SNAPSHOT-jar-with-dependencies.jar [password_file]
+
 
 Download
 --------
@@ -28,8 +29,7 @@ You can find the latest distribution package under the [releases](https://github
 
 How to compile
 --------------
-* Maven: `mvn clean package`
-* Gradle: `gradle clean build`
+* Maven: `mvn clean compile assembly:single -Dmaven.test.skip=true`
 
 Configuration
 -------------
@@ -75,6 +75,35 @@ The salt encryptition makes it impossible to prepare rainbow tables. For example
 
 --Ryoji
 
+File Encryption
+---------------
+![encrypt_file.png](./resources/encrypt_file.png)
+
+The structure of the encrypted file ``.enc`` is the same of the ``.jpass`` file.
+
+
+--Ryoji
+
+RSA key 
+--------
+![rsa_key_pair.png](./resources/rsa_key_pair.png)
+
+| Scheme                                | Key length |
+|:-------------------------------------:|:----------:|
+| RSA/ECB/OAEPWithSHA-256AndMGF1Padding |    4096    |
+
+![rsa_key_pair.png](./resources/rsa_enc.png)
+
+![rsa_key_pair.png](./resources/rsa_dec.png)
+
+Note: Encrypted pass phrase becomes very long text.
+
+|original phrase|encrypted phrase|
+|:-------------:|:--------------:|
+|dadada|TIMaLK0tyZE+2+kyj+I4AIdgt1sji/uNxoTz/ArFogjt6xFjRT6dmxSk2quZqG53XqmHYJQmYGUN/WapyhSzwu3Gr5tKCTx3cyqobZ+tciDgZsT0GYc2CLmCvSlWrwCJD5fG1Te5oSv6eJCW1gj6SgE3IJrIac2FTEZbKBThmTq36XfLEdXgfCZnuWl/GcUValZcOXOHHrNdijUzO5KFEfJu42mm8C6PBn6UWEpNqVwSDz9rQ9M75T2WbUpJttVR92l8O0iWk0GwFpIW+dvC8AD0Tyih96JXcPanU04LxJE7nFELMltRF+LMzWELuJWx0KT+HTPA0NG4J0/4Q9cQKPKG70b0LCn5rSJiJMZEn+1cTKVGpgbtNnnspqbTejyNe8YGNSx/1J38ORJhPT874OR7B75yM0QJO9zRtt1LpLGBkRr1KYJ8cbtkaZWYVDzrVuL81NLfL7dYqqoiiGNP8IGQ/M3LCh73YVMFnhUKFq7q+dGwrfZHDXHSuh1J/OA8JH4hSuhMUnvLi0D27DqfVG7b2HiL7+3tTR8QbFXyAumZtO6/FzQg5sOui5mGWxpp+KGvkxmdC4PLiw+Mc9fmdRA1WOM8ep3hTIxYZ4ykKkbZ9RAYrznsQTQIcGj1XDMxJ+gaRD4YW5RNNqJnH+ccZJaixaqF+h0BnyqXsKBnR80= (changes every time as using random)|
+
+
+--Ryoji
 
 License
 -------
@@ -133,3 +162,5 @@ The Silk icon set is licensed under a [Creative Commons Attribution 2.5 License]
 This software uses icons from the [Tango base icon theme](http://tango.freedesktop.org/Tango_Desktop_Project).
 
 The Tango base icon theme is licensed under the [Creative Commons Attribution Share-Alike license](http://creativecommons.org/licenses/by-sa/2.5/).
+
+The icon ``kgpg_key3.png`` was created by David Vignoni (GNU/GPL) https://commons.wikimedia.org/wiki/File:Kgpg_key3.png

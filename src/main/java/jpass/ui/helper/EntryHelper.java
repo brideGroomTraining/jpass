@@ -160,7 +160,7 @@ public final class EntryHelper {
                                         .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
                                         .collect(Collectors.joining());
             PublicKey publicKey = rsaOaep.deserializePublicKey(base64);
-            final String phrase = JOptionPane.showInputDialog(parent, "Input the passphrase you want to encrypt.");
+            final String phrase = JOptionPane.showInputDialog(parent, "Input the pass phrase you want to encrypt.");
             if (StringUtils.isEmpty(phrase)) return;
             final String encryptedPhrase = rsaOaep.encrypt(publicKey, phrase, new SecureRandom());
             Entry entry = new Entry() {{
@@ -197,7 +197,7 @@ public final class EntryHelper {
                                         .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
                                         .collect(Collectors.joining());
             PrivateKey privateKey = rsaOaep.deserializePrivateKey(base64);
-            final String phrase = JOptionPane.showInputDialog(parent, "Input the passphrase you want to decrypt.");
+            final String phrase = JOptionPane.showInputDialog(parent, "Input the pass phrase you want to decrypt.");
             if (StringUtils.isEmpty(phrase)) return;
             final String decryptedPhrase = rsaOaep.decrypt(privateKey, phrase.replaceAll("\\s+",""));
             Entry entry = new Entry() {{
