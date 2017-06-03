@@ -74,6 +74,7 @@ import org.apache.commons.lang.StringUtils;
  *
  */
 public final class JPassFrame extends JFrame {
+    private static volatile JPassFrame INSTANCE;
     private static final long   serialVersionUID = -4114209356464342368L;
     public  static final String PROGRAM_NAME     = "JPass Password Manager";
     public  static final String PROGRAM_VERSION  = "0.1.15-SNAPSHOT";
@@ -223,6 +224,21 @@ public final class JPassFrame extends JFrame {
 
         // set focus to the list for easier keyboard navigation
         this.entryTitleList.requestFocusInWindow();
+    }
+    
+    public static JPassFrame getInstance() {
+        return getInstance(null);
+    }
+
+    public static JPassFrame getInstance(String fileName) {
+        if (INSTANCE == null) {
+            synchronized (JPassFrame.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new JPassFrame(fileName);
+                }
+            }
+        }
+        return INSTANCE;
     }
 
     /**
