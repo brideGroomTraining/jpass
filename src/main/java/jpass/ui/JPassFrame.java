@@ -29,7 +29,6 @@
 
 package jpass.ui;
 
-import jpass.Singletons;
 import jpass.data.DataModel;
 import jpass.ui.action.Callback;
 import jpass.ui.action.CloseListener;
@@ -39,7 +38,6 @@ import jpass.ui.helper.EntryHelper;
 import jpass.ui.helper.FileHelper;
 import jpass.util.Configuration;
 import jpass.xml.bind.Entry;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -49,7 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -79,8 +76,6 @@ public final class JPassFrame extends JFrame {
     public  static final String PROGRAM_NAME     = "JPass Password Manager";
     public  static final String PROGRAM_VERSION  = "0.1.15-SNAPSHOT";
 
-    private final Configuration configuration = Singletons.I.getConfiguration();
-    
     private final JPopupMenu                popup;
     private final JPanel                    topContainerPanel;
     private final JMenuBar                  menuBar;
@@ -298,7 +293,9 @@ public final class JPassFrame extends JFrame {
      * Exits the application.
      */
     public void exitFrame() {
-        if (configuration.is("clear.clipboard.on.exit.enabled", false)) EntryHelper.copyEntryField(this, null);
+        if (Configuration.getInstance().is("clear.clipboard.on.exit.enabled", false)) {
+            EntryHelper.copyEntryField(this, null);
+        }
         if (this.processing) return;
         if (this.model.isModified()) {
             int option = MessageDialog.showQuestionMessage(this,
@@ -365,7 +362,7 @@ public final class JPassFrame extends JFrame {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (!configuration.is("fetch.icons", false)) return label;
+            if (!Configuration.getInstance().is("fetch.icons", false)) return label;
             Entry       entry = model.getEntryByTitle(value.toString()); // god forgive me
             ImageIcon   icon  = iconStorage.getIcon(entry.getUrl());
             if (icon != null) {

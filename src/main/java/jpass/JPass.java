@@ -35,6 +35,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import org.apache.commons.lang.StringUtils;
+import jpass.ui.JPassFrame;
 import jpass.util.Configuration;
 
 /**
@@ -44,11 +45,10 @@ import jpass.util.Configuration;
  *
  */
 public class JPass {
-    private static final Configuration configuration = Singletons.I.getConfiguration();
     private static final String METAL_LOOK_AND_FEEL = "javax.swing.plaf.metal.MetalLookAndFeel";
     public static void main(final String[] args) {
         try {
-            final String lookAndFeel = ((configuration.is("system.look.and.feel.enabled", false)))
+            final String lookAndFeel = ((Configuration.getInstance().is("system.look.and.feel.enabled", false)))
             		                 ? UIManager.getSystemLookAndFeelClassName() 
             		                 : METAL_LOOK_AND_FEEL;
             if (StringUtils.equals(lookAndFeel, METAL_LOOK_AND_FEEL)) {
@@ -62,7 +62,7 @@ public class JPass {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                Singletons.I.getJPassFrame((args.length > 0) ? args[0] : null);
+                JPassFrame.getInstance((args.length > 0) ? args[0] : null);
             }
         });
     }

@@ -32,11 +32,8 @@ package jpass.ui.action;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.JList;
 import javax.swing.SwingUtilities;
-
-import jpass.Singletons;
 import jpass.ui.JPassFrame;
 import jpass.ui.helper.EntryHelper;
 
