@@ -17,7 +17,7 @@ import jpass.ui.helper.AES256.Enc;
 
 public class FileHelperTest {
     @Test
-    //@Ignore
+    @Ignore
     public void cbcTest() throws Exception {
         AES256 aes256 = new AES256();
         String salt = Long.toString(new Date().getTime());
