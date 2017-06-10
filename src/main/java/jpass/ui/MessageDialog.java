@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -306,6 +307,11 @@ public final class MessageDialog extends JDialog implements ActionListener {
             ex.printStackTrace();
             return new byte[]{};
         }
+    }
+    
+    public static byte[] readSaltFromTextMessage(String encryptedTextMessage) {
+        final String aesPart = org.apache.commons.lang.StringUtils.substringAfter(encryptedTextMessage, ".").replaceAll("\\s+","");
+        return Arrays.copyOf(Base64.getDecoder().decode(aesPart), 36);
     }
 
     /**

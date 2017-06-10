@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang.StringUtils;
@@ -44,6 +45,7 @@ import jpass.crypt.RsaOaep;
 import jpass.ui.EntryDialog;
 import jpass.ui.JPassFrame;
 import jpass.ui.MessageDialog;
+import jpass.ui.TextMessageEncryptionDialog;
 import jpass.util.ClipboardUtils;
 import jpass.xml.bind.Entry;
 
@@ -130,6 +132,10 @@ public final class EntryHelper {
         }
         String title = (String) parent.getEntryTitleList().getSelectedValue();
         Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (StringUtils.isEmpty(oldEntry.getPassword())) {
+            MessageDialog.showWarningMessage(parent, "The password field of this entry is empty.");
+            return;
+        }
         FileHelper.encryptFile(parent, oldEntry.getPassword());
     }
     
@@ -140,7 +146,54 @@ public final class EntryHelper {
         }
         String title = (String) parent.getEntryTitleList().getSelectedValue();
         Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (StringUtils.isEmpty(oldEntry.getPassword())) {
+            MessageDialog.showWarningMessage(parent, "The password field of this entry is empty.");
+            return;
+        }
         FileHelper.decryptFile(parent, oldEntry.getPassword());
+    }
+    
+    public static void encryptTextMessage(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (!StringUtils.startsWith(oldEntry.getNotes(), "-----BEGIN RSA PUBLIC KEY-----")) {
+            MessageDialog.showWarningMessage(parent, "The entry is not a public key");
+            return;
+        }
+        try {
+            RsaOaep rsaOaep = new RsaOaep();
+            final String base64 = Arrays.stream(StringUtils.split(oldEntry.getNotes(), '\n'))
+                                        .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
+                                        .collect(Collectors.joining());
+            PublicKey publicKey = rsaOaep.deserializePublicKey(base64);
+            TextMessageEncryptionDialog textMessageEncryptionDialog = new TextMessageEncryptionDialog(parent, "Text Message Encryption");
+            final String textMessage = textMessageEncryptionDialog.getText().orElse(null);
+            if (StringUtils.isEmpty(textMessage)) return;
+            byte[] randomKey = new byte[128];
+            new SecureRandom().nextBytes(randomKey);
+            final String noncepass    = Base64.getEncoder().encodeToString(randomKey);
+            final String encryptedRsa = rsaOaep.encrypt(publicKey, noncepass, new SecureRandom());
+            final String encryptedAes = FileHelper.encryptTextMessage(textMessage, noncepass, UUID.randomUUID().toString().getBytes());
+            Entry entry = new Entry() {{
+               setTitle("RSA+AES TEXT MESSAGE ENCRYPTION: " + new SimpleDateFormat("yyyyMMdd HHmmss").format(new Date()));
+               setUrl(encryptedRsa + "." + encryptedAes);
+               setNotes("Your text message was encrypted with the public key and was set in the URL field.\n======================================\n" + textMessage);
+            }};
+            EntryDialog ed = new EntryDialog(parent, "Add New Entry", entry, false);
+            if (ed.getFormData() != null) {
+                parent.getModel().getEntries().getEntry().add(ed.getFormData());
+                parent.getModel().setModified(true);
+                parent.refreshFrameTitle();
+                parent.refreshEntryTitleList(ed.getFormData().getTitle());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showWarningMessage(parent, e.toString());
+        }
     }
     
     public static void encryptPhraseWithRsa(JPassFrame parent) {
@@ -166,6 +219,48 @@ public final class EntryHelper {
             Entry entry = new Entry() {{
                setTitle("RSA ENCRYPTION: " + new SimpleDateFormat("yyyyMMdd HHmmss").format(new Date()));
                setNotes(encryptedPhrase);
+            }};
+            EntryDialog ed = new EntryDialog(parent, "Add New Entry", entry, false);
+            if (ed.getFormData() != null) {
+                parent.getModel().getEntries().getEntry().add(ed.getFormData());
+                parent.getModel().setModified(true);
+                parent.refreshFrameTitle();
+                parent.refreshEntryTitleList(ed.getFormData().getTitle());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showWarningMessage(parent, e.toString());
+        }
+    }
+    
+    public static void decryptTextMessage(JPassFrame parent) {
+        if (parent.getEntryTitleList().getSelectedIndex() == -1) {
+            MessageDialog.showWarningMessage(parent, "Please select an entry.");
+            return;
+        }
+        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        Entry oldEntry = parent.getModel().getEntryByTitle(title);
+        if (!StringUtils.startsWith(oldEntry.getNotes(), "-----BEGIN RSA PRIVATE KEY-----")) {
+            MessageDialog.showWarningMessage(parent, "The entry is not a private key");
+            return;
+        }
+        try {
+            RsaOaep rsaOaep = new RsaOaep();
+            final String base64 = Arrays.stream(StringUtils.split(oldEntry.getNotes(), '\n'))
+                                        .map(l -> l.replaceAll("\\s+","")).filter(l -> !StringUtils.contains(l, "-"))
+                                        .collect(Collectors.joining());
+            PrivateKey privateKey = rsaOaep.deserializePrivateKey(base64);
+            TextMessageEncryptionDialog textMessageEncryptionDialog = new TextMessageEncryptionDialog(parent, "Text Message Decryption");
+            final String encryptedTextMessage = textMessageEncryptionDialog.getText().orElse(null);
+            if (StringUtils.isEmpty(encryptedTextMessage)) return;
+            final String decryptedPhrase = rsaOaep.decrypt(privateKey, StringUtils.substringBefore(encryptedTextMessage, ".").replaceAll("\\s+",""));
+            final String textMessage 
+                = FileHelper.decryptTextMessage(StringUtils.substringAfter(encryptedTextMessage, ".").replaceAll("\\s+",""),
+                                                decryptedPhrase,
+                                                MessageDialog.readSaltFromTextMessage(encryptedTextMessage));
+            Entry entry = new Entry() {{
+               setTitle("RSA+AES TEXT MESSAGE DECRYPTION: " + new SimpleDateFormat("yyyyMMdd HHmmss").format(new Date()));
+               setNotes(textMessage);
             }};
             EntryDialog ed = new EntryDialog(parent, "Add New Entry", entry, false);
             if (ed.getFormData() != null) {

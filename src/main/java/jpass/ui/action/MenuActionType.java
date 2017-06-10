@@ -212,6 +212,22 @@ public enum MenuActionType {
         }
     }),
 
+    ENCRYPT_TEXT_MESSAGE("jpass.menu.enc_text_message_action", new AbstractMenuAction("Encrypt text message with this public key...", MessageDialog.getIcon("security-low"), KeyStroke.getKeyStroke(KeyEvent.VK_J, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -7621614933053924326L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.encryptTextMessage(JPassFrame.getInstance());
+        }
+    }),
+    
+    DECRYPT_TEXT_MESSAGE("jpass.menu.dec_text_message_action", new AbstractMenuAction("Decrypt text message with this private key...", MessageDialog.getIcon("dialog-warning"), KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK)) {
+        private static final long serialVersionUID = -7986464933053924326L;
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            EntryHelper.decryptTextMessage(JPassFrame.getInstance());
+        }
+    }),
+    
     DUPLICATE_ENTRY("jpass.menu.duplicate_entry_action", new AbstractMenuAction("Duplicate Entry...", MessageDialog.getIcon("entry_duplicate"), KeyStroke.getKeyStroke(KeyEvent.VK_K, InputEvent.CTRL_MASK)) {
         private static final long serialVersionUID = 6728896867346523861L;
         @Override

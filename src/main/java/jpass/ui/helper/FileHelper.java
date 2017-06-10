@@ -29,6 +29,7 @@
 
 package jpass.ui.helper;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +38,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -305,6 +307,20 @@ public final class FileHelper {
         }
     }
     
+    public static String encryptTextMessage(String textMessage, final String password, final byte[] salt) throws Exception {
+        byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
+        try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            OutputStream gos = new GZIPOutputStream(new CryptOutputStream(new SaltOutputStream(bos, salt), hashedPass));
+        ) {
+            gos.write(textMessage.getBytes("UTF-8"));
+            gos.flush();
+            gos.close();
+            bos.flush();
+            return Base64.getEncoder().encodeToString(bos.toByteArray());
+        }
+    }
+    
     public static void decryptFile(final JPassFrame parent, final String password) {
         final File file = showFileChooser(parent, "Open", "enc", "encrypted file");
         if (file == null) return;
@@ -327,6 +343,16 @@ public final class FileHelper {
              OutputStream os = new FileOutputStream(file.getCanonicalPath().replaceAll(".enc$", "") + ".dec");) {
             IOUtils.copy(fis, os, 8192);
             os.flush();
+        }
+    }
+    
+    public static String decryptTextMessage(String textMessage, final String password, final byte[] salt) throws Exception {
+        byte[] hashedPass = MessageDialog.generateHash(password.toCharArray(), salt);
+        try (InputStream           gis = new GZIPInputStream(new CryptInputStream(new SaltInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(textMessage))), hashedPass));
+             ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+            IOUtils.copy(gis, bos, 8192);
+            bos.flush();
+            return new String(bos.toByteArray(), "UTF-8");
         }
     }
 
